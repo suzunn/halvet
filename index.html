@@ -75,6 +75,10 @@
   .pad--tl { background: radial-gradient(ellipse 46% 52% at 0% 22%, color-mix(in oklab, var(--sc-canvas) 82%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 50%, transparent) 55%, transparent 100%); }
   .pad--l  { background: linear-gradient(90deg, color-mix(in oklab, var(--sc-canvas) 90%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 70%, transparent) 26%, transparent 48%); }
 
+  /* The poster only holds a leg until its clip paints. Pushed in, it hands
+     over to an unscaled clip with a visible jump in scale, so it stays still. */
+  .sc-world__poster { transform: none !important; }
+
   /* ---- copy blocks ------------------------------------------------------- */
   .blk { position: absolute; z-index: 1; max-width: 30ch; }
   .blk h2 { font-family: var(--sc-font-display); font-weight: 500; font-size: var(--t-head); line-height: 1.02; letter-spacing: -0.025em; margin: 0 0 clamp(14px, 1.6vw, 22px); text-wrap: balance; }
@@ -177,17 +181,17 @@
     <span class="mark__name">Halvet Saat Atölyesi</span>
   </a>
   <nav class="nav" aria-label="Sayfa">
-    <a href="#kadran" data-go="0.27">Kadran</a>
-    <a href="#ici" data-go="0.66" class="nav__keep">İçi</a>
-    <a href="#kalp" data-go="0.78">Kalp</a>
+    <a href="#kadran" data-go="0.21">Kadran</a>
+    <a href="#ici" data-go="0.544" class="nav__keep">İçi</a>
+    <a href="#kalp" data-go="0.685">Kalp</a>
     <a href="#ugrayin" data-go="1" class="nav__go">Uğrayın</a>
   </nav>
 </header>
 
-<main id="top" data-sc-mode="worldflight" data-sc-seam="0.16" data-sc-lerp="0.12">
+<main id="top" data-sc-mode="worldflight" data-sc-seam="0.26" data-sc-lerp="0.12">
 
   <div data-sc-world>
-    <div data-sc-segment data-sc-w="1.5" data-sc-waypoint="Karanlık">
+    <div data-sc-segment data-sc-w="1.4" data-sc-waypoint="Karanlık">
       <img class="sc-world__poster" src="assets/p1.webp" data-m="assets/p1-m.webp" alt="" decoding="async">
       <video data-sc-src="assets/v1.mp4" data-sc-src-mobile="assets/v1-m.mp4" muted playsinline></video>
     </div>
@@ -195,15 +199,15 @@
       <img class="sc-world__poster" src="assets/p2.webp" data-m="assets/p2-m.webp" alt="" decoding="async">
       <video data-sc-src="assets/v2.mp4" data-sc-src-mobile="assets/v2-m.mp4" muted playsinline></video>
     </div>
-    <div data-sc-segment data-sc-w="3" data-sc-waypoint="Açılış">
+    <div data-sc-segment data-sc-w="3.2" data-sc-waypoint="Açılış">
       <img class="sc-world__poster" src="assets/p3.webp" data-m="assets/p3-m.webp" alt="" decoding="async">
       <video data-sc-src="assets/v3.mp4" data-sc-src-mobile="assets/v3-m.mp4" muted playsinline></video>
     </div>
-    <div data-sc-segment data-sc-w="1.5" data-sc-waypoint="Kalp">
+    <div data-sc-segment data-sc-w="2.2" data-sc-waypoint="Kalp">
       <img class="sc-world__poster" src="assets/p4.webp" data-m="assets/p4-m.webp" alt="" decoding="async">
       <video data-sc-src="assets/v4.mp4" data-sc-src-mobile="assets/v4-m.mp4" muted playsinline></video>
     </div>
-    <div data-sc-segment data-sc-w="1.5" data-sc-waypoint="Bütün">
+    <div data-sc-segment data-sc-w="2.8" data-sc-waypoint="Bütün">
       <img class="sc-world__poster" src="assets/p5.webp" data-m="assets/p5-m.webp" alt="" decoding="async">
       <video data-sc-src="assets/v5.mp4" data-sc-src-mobile="assets/v5-m.mp4" muted playsinline></video>
     </div>
@@ -215,19 +219,19 @@
     <h1 data-sc-copy data-sc-window="hero" class="hero__name"><span>halvet</span><span class="vh"> mekanik saat atölyesi</span></h1>
     <p data-sc-copy data-sc-window="hero" class="hero__line">Kuzguncuk'ta tek bir masada, elle kurulan mekanik saatler.</p>
 
-    <div data-sc-copy data-sc-window="0.105 0.205" class="blk blk--left">
+    <div data-sc-copy data-sc-window="0.075 0.165" class="blk blk--left">
       <h2>Yılda on iki saat.</h2>
       <p>Her biri baştan sona tek bir ustanın elinden geçer. Sipariş sırası açıldığında haber veririz.</p>
     </div>
 
     <div class="pad pad--br" data-pad="kadran" aria-hidden="true"></div>
-    <div data-sc-copy data-sc-window="0.215 0.33" class="blk blk--right" id="kadran">
+    <div data-sc-copy data-sc-window="0.168 0.258" class="blk blk--right" id="kadran">
       <h2>Kadran elle kazınır.</h2>
       <p>Siyah zemindeki dalgalar gravür tezgâhında tek tek işlenir. İki kadran hiçbir zaman aynı çıkmaz.</p>
     </div>
 
     <div class="pad pad--tl" data-pad="ici" aria-hidden="true"></div>
-    <div data-sc-copy data-sc-window="0.345 0.50" class="blk blk--top" id="ici">
+    <div data-sc-copy data-sc-window="0.271 0.405" class="blk blk--top" id="ici">
       <h2>Şimdi içine bakın.</h2>
       <p>Her parça bu masada ayarlanır, sonra sessizce yerine döner.</p>
     </div>
@@ -235,29 +239,29 @@
     <div class="parts" aria-label="Halvet Kalp'in parçaları">
       <svg aria-hidden="true" data-pad="part1"></svg>
       <ul>
-        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" id="part1" data-at="0.640 0.167">Safir cam<small>Çizilmez, iki yüzü yansımasız</small></li>
-        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.617 0.268">İbreler<small>Altından, elle eğilmiş</small></li>
-        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.613 0.392">Kadran<small>Dalga gravürü</small></li>
-        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.594 0.542">Mekanizma<small>Elle kurmalı, kırk saat çalışır</small></li>
-        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.622 0.630">Kasa<small>18 ayar sarı altın, 38 mm</small></li>
-        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.592 0.785">Arka cam<small>Kalbi görünsün diye</small></li>
+        <li data-sc-copy data-sc-window="0.496 0.595 0.3 0.3" id="part1" data-at="0.640 0.167">Safir cam<small>Çizilmez, iki yüzü yansımasız</small></li>
+        <li data-sc-copy data-sc-window="0.496 0.595 0.3 0.3" data-at="0.617 0.268">İbreler<small>Altından, elle eğilmiş</small></li>
+        <li data-sc-copy data-sc-window="0.496 0.595 0.3 0.3" data-at="0.613 0.392">Kadran<small>Dalga gravürü</small></li>
+        <li data-sc-copy data-sc-window="0.496 0.595 0.3 0.3" data-at="0.594 0.542">Mekanizma<small>Elle kurmalı, kırk saat çalışır</small></li>
+        <li data-sc-copy data-sc-window="0.496 0.595 0.3 0.3" data-at="0.622 0.630">Kasa<small>18 ayar sarı altın, 38 mm</small></li>
+        <li data-sc-copy data-sc-window="0.496 0.595 0.3 0.3" data-at="0.592 0.785">Arka cam<small>Kalbi görünsün diye</small></li>
       </ul>
     </div>
 
     <div class="pad pad--l" data-pad="kalp" aria-hidden="true"></div>
-    <div data-sc-copy data-sc-window="0.725 0.83" class="blk blk--left" id="kalp">
+    <div data-sc-copy data-sc-window="0.619 0.744" class="blk blk--left" id="kalp">
       <h2>Kalbi saniyede altı kez atar.</h2>
       <p>Balans çarkı ve mavi spirali. Her sabah kurmayı unutmayın, gerisini o halleder.</p>
     </div>
 
     <div class="pad pad--l pad--end" data-pad="ugrayin" aria-hidden="true"></div>
-    <div data-sc-copy data-sc-window="0.93 1 0.45 0" class="end__time" id="ugrayin">
+    <div data-sc-copy data-sc-window="0.894 1 0.45 0" class="end__time" id="ugrayin">
         <h2>Şimdi saat <time id="now">--.--</time>.</h2>
         <p>Halvet de aynısını söylüyor. Köşedeki kadrana bakın.</p>
     </div>
-      <a data-sc-copy data-sc-window="0.93 1 0.45 0" class="go" href="mailto:atolye@halvet.example?subject=Randevu">Uğrayın</a>
-      <p data-sc-copy data-sc-window="0.93 1 0.45 0" class="go__note">Kuzguncuk'taki atölye yalnızca randevuyla açık. Haftada iki misafir.</p>
-      <div data-sc-copy data-sc-window="0.93 1 0.45 0" class="foot"><span>Halvet Saat Atölyesi · İstanbul</span><span>Uydurma bir markadır.</span></div>
+      <a data-sc-copy data-sc-window="0.894 1 0.45 0" class="go" href="mailto:atolye@halvet.example?subject=Randevu">Uğrayın</a>
+      <p data-sc-copy data-sc-window="0.894 1 0.45 0" class="go__note">Kuzguncuk'taki atölye yalnızca randevuyla açık. Haftada iki misafir.</p>
+      <div data-sc-copy data-sc-window="0.894 1 0.45 0" class="foot"><span>Halvet Saat Atölyesi · İstanbul</span><span>Uydurma bir markadır.</span></div>
   </div>
 
   <div data-sc-spacer aria-hidden="true"></div>
@@ -277,12 +281,27 @@
     });
     // Without the film the exploded frame holds for the whole leg, so the names
     // can arrive earlier and leave before the next still dissolves in.
-    if (still) document.querySelectorAll('.parts li').forEach(function (li) { li.setAttribute('data-sc-window', '0.47 0.645 0.25 0.3'); });
+    if (still) document.querySelectorAll('.parts li').forEach(function (li) { li.setAttribute('data-sc-window', '0.38 0.532 0.25 0.3'); });
   })();
 </script>
 <script src="scrollcraft.js"></script>
 <script>
   window.__sc = ScrollCraft.mount(document);
+
+  // Fetch every leg up front, in flight order, so nobody scrolls into a poster.
+  // The engine's own fetch of the same URL is then served from the cache.
+  addEventListener('load', function () {
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var save = navigator.connection && navigator.connection.saveData;
+    if (still || save) return;
+    var mobile = matchMedia('(max-width: 860px)').matches || matchMedia('(hover: none) and (pointer: coarse)').matches;
+    var urls = Array.prototype.map.call(document.querySelectorAll('[data-sc-segment] video'), function (v) {
+      return (mobile && v.getAttribute('data-sc-src-mobile')) || v.getAttribute('data-sc-src');
+    });
+    urls.reduce(function (chain, u) {
+      return chain.then(function () { return fetch(u, { cache: 'force-cache' }).then(function (r) { return r.blob(); }).catch(function () {}); });
+    }, Promise.resolve());
+  });
 
   function relayout() { dispatchEvent(new Event('resize')); }
   addEventListener('load', relayout);
@@ -290,7 +309,7 @@
 
   var root = document.documentElement;
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var TOTAL = 9; // sum of leg weights, in viewport-heights
+  var TOTAL = 11.1; // sum of leg weights, in viewport-heights
 
   function trackY(f) { return f * TOTAL * innerHeight; }
   function progress() {
@@ -325,7 +344,7 @@
     fmt.formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
     return { h: +p.hour % 24, m: +p.minute, s: +p.second };
   }
-  var S0 = 0.9, S1 = 0.985; // the catch-up runs across the finale
+  var S0 = 0.849, S1 = 0.977; // the catch-up runs across the finale
   function smooth(x) { x = Math.min(Math.max(x, 0), 1); return x * x * (3 - 2 * x); }
   function mod(a, n) { return ((a % n) + n) % n; }
   var shown = { h: 0, m: 0 }, lastText = '';
@@ -351,11 +370,43 @@
     nameSpan.style.transform = reduce ? 'none' : 'scale(' + (1 - 0.06 * k).toFixed(4) + ')';
 
     pads.forEach(function (p) { p[0].style.opacity = p[1].style.opacity || 0; });
+    if (!reduce) alignSeams();
 
     requestAnimationFrame(tick);
   }
   var pads = Array.prototype.map.call(document.querySelectorAll("[data-pad]"), function (p) { return [p, document.getElementById(p.getAttribute("data-pad"))]; });
   var nameSpan = document.querySelector('.hero__name span');
+
+  // ---- seams: land each join on the same framing ---------------------------
+  // The generated legs meet a percent or two apart in scale (measured with
+  // tools/seam-align.mjs on the encoded files). Ease that difference in over
+  // the last or first 40% of a leg, keyed to the frame actually on screen, so
+  // both sides of every crossfade show the same picture.
+  // s: zoom that lands leg n+1's first frame on leg n's last; d in frame fractions.
+  var SEAMS = { 1: { s: 1.005, dx: 0.002, dy: 0 }, 2: { s: 0.98, dx: 0, dy: 0 }, 4: { s: 0.995, dx: -0.002, dy: 0.002 } };
+  var segEls = Array.prototype.slice.call(document.querySelectorAll('[data-sc-segment]'));
+  var ramps = segEls.map(function () { return { into: null, out: null }; });
+  Object.keys(SEAMS).forEach(function (k) {
+    var n = +k, j = SEAMS[k];
+    if (j.s >= 1) ramps[n].into = j;                                   // zoom the incoming leg
+    else ramps[n - 1].out = { s: 1 / j.s, dx: -j.dx / j.s, dy: -j.dy / j.s }; // or the outgoing one
+  });
+  function alignSeams() {
+    var vw = innerWidth, vh = innerHeight, W;
+    if (vw <= 860 || matchMedia('(hover: none) and (pointer: coarse)').matches) W = Math.max(vw, vh * 9 / 16) / (405 / 1280);
+    else W = Math.max(vw, vh * 16 / 9);
+    segEls.forEach(function (el, i) {
+      var r = ramps[i];
+      if (!r.into && !r.out) return;
+      var v = el.querySelector('video'), f;
+      if (v && v.duration && el.querySelector('.sc-has-clip')) f = v.currentTime / v.duration;
+      else f = (window.__sc && __sc.worlds[0] && __sc.worlds[0].segs[i]) ? __sc.worlds[0].segs[i].local : 0;
+      var sc = 1, tx = 0, ty = 0, k;
+      if (r.into) { k = 1 - smooth(f / 0.4); sc *= 1 + (r.into.s - 1) * k; tx += r.into.dx * k; ty += r.into.dy * k; }
+      if (r.out)  { k = smooth((f - 0.6) / 0.4); sc *= 1 + (r.out.s - 1) * k; tx += r.out.dx * k; ty += r.out.dy * k; }
+      el.style.transform = 'translate3d(' + (tx * W).toFixed(2) + 'px,' + (ty * W * 9 / 16).toFixed(2) + 'px,0) scale(' + sc.toFixed(5) + ')';
+    });
+  }
   requestAnimationFrame(tick);
 
   // ---- the peak: name every part where it hangs ----------------------------
