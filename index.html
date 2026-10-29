@@ -59,6 +59,13 @@
   .dial__h { stroke-width: 2.4; }
   .dial__m { stroke-width: 1.5; }
   .dial__pin { fill: var(--sc-accent); }
+  /* while the film downloads the ring dims and fills back in, brass, as it arrives */
+  .dial__load { fill: none; stroke: var(--sc-accent); stroke-width: 1.5; stroke-dasharray: 0 1; opacity: 0; transition: opacity 400ms var(--sc-ease-out); }
+  .is-loading .dial__ring { opacity: .28; }
+  .is-loading .dial__load { opacity: 1; }
+  .dial__ring { transition: opacity 400ms var(--sc-ease-out); }
+  .mark__load { font-size: var(--t-small); font-weight: 500; color: var(--sc-ink-soft); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: 0 1px 10px rgba(0,0,0,.75); opacity: 0; transition: opacity 300ms var(--sc-ease-out); }
+  .mark__load.is-on { opacity: 1; }
 
   /* ---- scrim: one shape, density only where copy sits ------------------- */
   .scrim {
@@ -173,12 +180,14 @@
     <svg viewBox="0 0 44 44" aria-hidden="true">
       <circle class="dial__face" cx="22" cy="22" r="20"/>
       <circle class="dial__ring" cx="22" cy="22" r="20"/>
+      <circle class="dial__load" cx="22" cy="22" r="20" pathLength="1" transform="rotate(-90 22 22)"/>
       <g id="ticks"></g>
       <line class="dial__h" x1="22" y1="22" x2="22" y2="12"/>
       <line class="dial__m" x1="22" y1="22" x2="22" y2="6.5"/>
       <circle class="dial__pin" cx="22" cy="22" r="1.8"/>
     </svg>
     <span class="mark__name">Halvet Saat Atölyesi</span>
+    <span class="mark__load" aria-hidden="true"></span>
   </a>
   <nav class="nav" aria-label="Sayfa">
     <a href="#kadran" data-go="0.21">Kadran</a>
@@ -282,26 +291,80 @@
     // Without the film the exploded frame holds for the whole leg, so the names
     // can arrive earlier and leave before the next still dissolves in.
     if (still) document.querySelectorAll('.parts li').forEach(function (li) { li.setAttribute('data-sc-window', '0.38 0.532 0.25 0.3'); });
+    // The page downloads the film itself (below) and hands each leg over when
+    // it has fully arrived. Until then the engine sees no source, so it never
+    // starts a second download of the same file alongside ours.
+    var save = navigator.connection && navigator.connection.saveData;
+    if (!still && !save && window.fetch && window.Blob && window.URL) {
+      document.querySelectorAll('[data-sc-segment] video').forEach(function (v) {
+        v.setAttribute('data-film', (mobile && v.getAttribute('data-sc-src-mobile')) || v.getAttribute('data-sc-src'));
+        v.removeAttribute('data-sc-src'); v.removeAttribute('data-sc-src-mobile');
+      });
+    }
   })();
 </script>
 <script src="scrollcraft.js"></script>
 <script>
   window.__sc = ScrollCraft.mount(document);
 
-  // Fetch every leg up front, in flight order, so nobody scrolls into a poster.
-  // The engine's own fetch of the same URL is then served from the cache.
-  addEventListener('load', function () {
-    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var save = navigator.connection && navigator.connection.saveData;
-    if (still || save) return;
-    var mobile = matchMedia('(max-width: 860px)').matches || matchMedia('(hover: none) and (pointer: coarse)').matches;
-    var urls = Array.prototype.map.call(document.querySelectorAll('[data-sc-segment] video'), function (v) {
-      return (mobile && v.getAttribute('data-sc-src-mobile')) || v.getAttribute('data-sc-src');
-    });
-    urls.reduce(function (chain, u) {
-      return chain.then(function () { return fetch(u, { cache: 'force-cache' }).then(function (r) { return r.blob(); }).catch(function () {}); });
-    }, Promise.resolve());
-  });
+  // Fetch every leg up front, from the one in view onward, so nobody scrolls
+  // into a poster. The engine's own fetch of the same URL is then served from
+  // the cache. The dial's ring fills as the bytes arrive, and while the leg on
+  // screen is still only a poster, a word beside it says the film is coming.
+  (function () {
+    var segs = Array.prototype.slice.call(document.querySelectorAll('[data-sc-segment]'));
+    if (!segs.length || !segs[0].querySelector('video[data-film]')) return;
+    var urls = segs.map(function (s) { return s.querySelector('video').getAttribute('data-film'); });
+    var ring = document.querySelector('.dial__load'), word = document.querySelector('.mark__load');
+    var got = urls.map(function () { return 0; }), size = urls.map(function () { return 0; }), done = 0;
+    var bar = document.querySelector('.bar');
+    bar.classList.add('is-loading');
+    function pct() {
+      var g = 0, t = 0;
+      for (var i = 0; i < urls.length; i++) { g += got[i]; t += size[i] || 2.5e6; }
+      return Math.min(g / t, 1);
+    }
+    function paint() {
+      var p = pct();
+      ring.style.strokeDasharray = p.toFixed(4) + ' 1';
+      // the leg on screen is the most opaque one; is its film painted yet?
+      var on = 0, best = -1;
+      segs.forEach(function (s, i) { var o = +getComputedStyle(s).opacity; if (o > best) { best = o; on = i; } });
+      var waiting = !segs[on].querySelector('.sc-has-clip');
+      word.textContent = 'Film yükleniyor · %' + Math.round(p * 100);
+      word.classList.toggle('is-on', waiting && done < urls.length);
+      if (done < urls.length) setTimeout(paint, 250);
+      else { word.classList.remove('is-on'); setTimeout(function () { bar.classList.remove('is-loading'); }, 600); }
+    }
+    // Each leg goes to the engine as a blob URL once every byte is here. If the
+    // download fails, the engine gets the plain URL back and fetches it itself.
+    function give(i, u) {
+      segs[i].querySelector('video').setAttribute('data-sc-src', u);
+      dispatchEvent(new Event('scroll')); // the engine loads legs from its scroll read
+    }
+    function pull(i) {
+      var parts = [];
+      return fetch(urls[i]).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        size[i] = +r.headers.get('content-length') || 0;
+        if (!r.body || !r.body.getReader) return r.blob().then(function (b) { parts.push(b); got[i] = b.size; });
+        var rd = r.body.getReader();
+        return (function step() {
+          return rd.read().then(function (c) { if (c.done) return; parts.push(c.value); got[i] += c.value.length; return step(); });
+        })();
+      }).then(function () {
+        give(i, URL.createObjectURL(new Blob(parts, { type: 'video/mp4' })));
+      }, function () { give(i, urls[i]); }).then(function () {
+        got[i] = size[i] = Math.max(got[i], size[i], 1); done++;
+      });
+    }
+    var y = (scrollY || 0) / innerHeight, c = 0, first = 0;
+    for (var i = 0; i < segs.length; i++) { c += +segs[i].getAttribute('data-sc-w'); if (y < c) { first = i; break; } }
+    var order = [];
+    for (var k = 0; k < urls.length; k++) order.push((first + k) % urls.length);
+    order.reduce(function (chain, i) { return chain.then(function () { return pull(i); }); }, Promise.resolve());
+    paint();
+  })();
 
   function relayout() { dispatchEvent(new Event('resize')); }
   addEventListener('load', relayout);
