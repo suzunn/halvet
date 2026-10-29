@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="tr" data-sc-lerp="0.12">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Halvet · Kuzguncuk'ta elle kurulan mekanik saatler</title>
+<meta name="description" content="Halvet, İstanbul Kuzguncuk'ta tek bir masada mekanik saat yapan küçük bir atölye. Saati kaydırarak açın, kalbine inin.">
+<meta name="theme-color" content="#0B0A08">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='16' fill='%230B0A08'/><circle cx='16' cy='16' r='11' fill='none' stroke='%23C9A15A' stroke-width='2'/><path d='M16 16V8M16 16l5 3' stroke='%23C9A15A' stroke-width='2' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="scrollcraft.css">
+<style>
+  :root {
+    --sc-canvas:     #0B0A08;
+    --sc-surface:    #15120E;
+    --sc-ink:        #EEE5D3;
+    --sc-ink-soft:   #B3A891;
+    --sc-accent:     #C9A15A;
+    --sc-accent-ink: #120F0A;
+    --sc-font-display: "General Sans", "Segoe UI", system-ui, sans-serif;
+    --sc-font-text:    "General Sans", "Segoe UI", system-ui, sans-serif;
+
+    --t-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+    --t-body:  clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+    --t-lead:  clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+    --t-head:  clamp(2rem, 1.3rem + 3.2vw, 4rem);
+    --edge: clamp(20px, 2.4vw, 32px);
+  }
+
+  html { background: var(--sc-canvas); }
+  body { color: var(--sc-ink); font-family: var(--sc-font-text); font-size: var(--t-body); line-height: 1.5; letter-spacing: 0.005em; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 4px; border-radius: 2px; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---- bar: the dial is the mark, four words opposite ------------------- */
+  .bar {
+    position: fixed; z-index: 60; inset: 0 0 auto 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--edge);
+    pointer-events: none;
+  }
+  .bar > * { pointer-events: auto; }
+  .mark { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .mark svg { width: 44px; height: 44px; display: block; overflow: visible; }
+  .mark__name { font-size: var(--t-small); font-weight: 500; color: var(--sc-ink-soft); letter-spacing: 0.02em; }
+  .nav { display: flex; gap: clamp(16px, 2.2vw, 32px); font-size: 15px; font-weight: 500; }
+  .nav a { text-decoration: none; color: var(--sc-ink-soft); padding: 10px 2px; transition: color 160ms var(--sc-ease-out); }
+  .nav a:hover { color: var(--sc-ink); }
+  .nav a.nav__go { color: var(--sc-accent); }
+  .nav a.nav__go:hover { color: var(--sc-ink); }
+
+  .dial__ring { fill: none; stroke: var(--sc-accent); stroke-width: 1.5; }
+  .dial__face { fill: #14110C; }
+  .dial__tick { stroke: var(--sc-accent); stroke-width: 1.2; stroke-linecap: round; opacity: .75; }
+  .dial__h, .dial__m { stroke: var(--sc-ink); stroke-linecap: round; transform-origin: 22px 22px; }
+  .dial__h { stroke-width: 2.4; }
+  .dial__m { stroke-width: 1.5; }
+  .dial__pin { fill: var(--sc-accent); }
+
+  /* ---- scrim: one shape, density only where copy sits ------------------- */
+  .scrim {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      linear-gradient(90deg, color-mix(in oklab, var(--sc-canvas) 72%, transparent) 0%, transparent 46%),
+      linear-gradient(0deg, color-mix(in oklab, var(--sc-canvas) 80%, transparent) 0%, transparent 34%);
+  }
+
+  /* A pad is extra density shaped to one block, sharing that block's window.
+     It is a sibling, never a child, so the contrast pass can measure it. */
+  .pad { position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0; }
+  .pad--br { background: radial-gradient(ellipse 58% 62% at 100% 100%, color-mix(in oklab, var(--sc-canvas) 94%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 82%, transparent) 45%, transparent 100%); }
+  .pad--tl { background: radial-gradient(ellipse 46% 52% at 0% 22%, color-mix(in oklab, var(--sc-canvas) 82%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 50%, transparent) 55%, transparent 100%); }
+  .pad--l  { background: linear-gradient(90deg, color-mix(in oklab, var(--sc-canvas) 90%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 70%, transparent) 26%, transparent 48%); }
+
+  /* ---- copy blocks ------------------------------------------------------- */
+  .blk { position: absolute; z-index: 1; max-width: 30ch; }
+  .blk h2 { font-family: var(--sc-font-display); font-weight: 500; font-size: var(--t-head); line-height: 1.02; letter-spacing: -0.025em; margin: 0 0 clamp(14px, 1.6vw, 22px); text-wrap: balance; }
+  .blk p { margin: 0; color: var(--sc-ink-soft); font-size: var(--t-body); line-height: 1.55; max-width: 34ch; text-wrap: pretty; }
+  .blk--left  { left: var(--edge); top: 50%; translate: 0 -50%; }
+  .blk--right { right: var(--edge); bottom: clamp(48px, 12vh, 120px); text-align: right; }
+  .blk--right p { margin-left: auto; }
+  .blk--top   { left: var(--edge); top: clamp(110px, 18vh, 180px); }
+
+  /* hero */
+  .hero { position: absolute; inset: 0; z-index: 1; }
+  .hero__line {
+    position: absolute; left: var(--edge); top: 40%;
+    margin: 0; max-width: 24ch;
+    font-size: var(--t-lead); line-height: 1.32; font-weight: 400; text-wrap: balance;
+  }
+  .hero__name {
+    position: absolute; left: 0; right: 0; bottom: 2.4vh;
+    margin: 0; line-height: 0.8;
+    font-family: var(--sc-font-display); font-weight: 400;
+    font-size: 23vw; letter-spacing: -0.045em;
+    text-align: center; color: var(--sc-ink);
+    transform-origin: 50% 100%;
+    translate: 0 0;
+  }
+  .hero__name span { display: block; transform-origin: 50% 100%; will-change: transform; }
+
+  /* the peak: parts named where they hang */
+  .parts { position: absolute; inset: 0; z-index: 1; }
+  .parts svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0; }
+  .parts line { stroke: var(--sc-accent); stroke-width: 1; opacity: .8; }
+  .parts circle { fill: var(--sc-accent); }
+  .parts ul { list-style: none; margin: 0; padding: 0; }
+  .parts li {
+    position: absolute; white-space: nowrap;
+    font-size: var(--t-small); font-weight: 500; letter-spacing: 0.02em;
+    translate: 0 -50%;
+  }
+  .parts li small { display: block; color: var(--sc-ink-soft); font-weight: 400; font-size: 13px; letter-spacing: 0; }
+
+  /* finale */
+  .end { position: absolute; inset: 0; z-index: 1; }
+  .end__time { position: absolute; left: var(--edge); top: clamp(120px, 22vh, 220px); max-width: min(46vw, 640px); }
+  .end__time h2 { font-weight: 500; font-size: var(--t-head); line-height: 1.02; letter-spacing: -0.025em; margin: 0 0 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .end__time p { margin: 0; color: var(--sc-ink-soft); max-width: 30ch; }
+  .go {
+    position: absolute; left: var(--edge); bottom: calc(var(--edge) + 72px);
+    display: inline-block; text-decoration: none;
+    font-weight: 500; font-size: clamp(4.5rem, 14vw, 13rem); line-height: .82; letter-spacing: -0.05em;
+    color: var(--sc-accent);
+    transition: color 160ms var(--sc-ease-out), translate 160ms var(--sc-ease-out);
+  }
+  .go:hover { color: var(--sc-ink); }
+  .go:active { translate: 0 1px; }
+  .go__note { position: absolute; right: var(--edge); bottom: calc(var(--edge) + 40px); max-width: 30ch; margin: 0; text-align: right; color: var(--sc-ink-soft); font-size: var(--t-body); }
+  .foot { position: absolute; left: var(--edge); right: var(--edge); bottom: var(--edge); display: flex; justify-content: space-between; font-size: var(--t-small); color: var(--sc-ink-soft); }
+
+  @media (max-width: 860px) {
+    .mark__name { display: none; }
+    .nav { gap: 18px; font-size: 15px; }
+    .nav a:not(.nav__go):not(.nav__keep) { display: none; }
+    .scrim {
+      background: linear-gradient(0deg, color-mix(in oklab, var(--sc-canvas) 86%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 55%, transparent) 38%, transparent 62%);
+    }
+    .hero__line { top: auto; bottom: calc(31vw + 36px); font-size: 1.1875rem; max-width: 22ch; }
+    .hero__name { font-size: 35vw; letter-spacing: -0.055em; }
+    .blk, .blk--left, .blk--right, .blk--top { left: 20px; right: 20px; top: auto; bottom: 48px; translate: none; text-align: left; max-width: none; }
+    .blk--right p { margin-left: 0; }
+    .blk h2 { font-size: 2.25rem; }
+    .end__time { top: 96px; left: 20px; right: 20px; max-width: none; }
+    .end__time h2 { font-size: 2.25rem; white-space: normal; }
+    .go { left: 20px; bottom: 148px; font-size: 26vw; }
+    .go__note { left: 20px; right: 20px; bottom: 60px; text-align: left; font-size: 15px; max-width: none; }
+    .foot { left: 20px; right: 20px; bottom: 20px; font-size: 13px; }
+    .pad { background: linear-gradient(0deg, color-mix(in oklab, var(--sc-canvas) 90%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 62%, transparent) 30%, transparent 56%); }
+    .pad--end { background:
+      linear-gradient(180deg, color-mix(in oklab, var(--sc-canvas) 90%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 62%, transparent) 26%, transparent 40%),
+      linear-gradient(0deg, color-mix(in oklab, var(--sc-canvas) 90%, transparent) 0%, color-mix(in oklab, var(--sc-canvas) 62%, transparent) 30%, transparent 46%); }
+    .parts svg { display: none; }
+    .parts ul { position: absolute; left: 20px; right: 20px; bottom: 40px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+    .parts li { position: static; translate: none; font-size: 15px; }
+    .parts li small { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sc-grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <a class="mark" href="#top" data-go="0" aria-label="Halvet, başa dön">
+    <svg viewBox="0 0 44 44" aria-hidden="true">
+      <circle class="dial__face" cx="22" cy="22" r="20"/>
+      <circle class="dial__ring" cx="22" cy="22" r="20"/>
+      <g id="ticks"></g>
+      <line class="dial__h" x1="22" y1="22" x2="22" y2="12"/>
+      <line class="dial__m" x1="22" y1="22" x2="22" y2="6.5"/>
+      <circle class="dial__pin" cx="22" cy="22" r="1.8"/>
+    </svg>
+    <span class="mark__name">Halvet Saat Atölyesi</span>
+  </a>
+  <nav class="nav" aria-label="Sayfa">
+    <a href="#kadran" data-go="0.27">Kadran</a>
+    <a href="#ici" data-go="0.66" class="nav__keep">İçi</a>
+    <a href="#kalp" data-go="0.78">Kalp</a>
+    <a href="#ugrayin" data-go="1" class="nav__go">Uğrayın</a>
+  </nav>
+</header>
+
+<main id="top" data-sc-mode="worldflight" data-sc-seam="0.16" data-sc-lerp="0.12">
+
+  <div data-sc-world>
+    <div data-sc-segment data-sc-w="1.5" data-sc-waypoint="Karanlık">
+      <img class="sc-world__poster" src="assets/p1.webp" data-m="assets/p1-m.webp" alt="" decoding="async">
+      <video data-sc-src="assets/v1.mp4" data-sc-src-mobile="assets/v1-m.mp4" muted playsinline></video>
+    </div>
+    <div data-sc-segment data-sc-w="1.5" data-sc-waypoint="Kadran">
+      <img class="sc-world__poster" src="assets/p2.webp" data-m="assets/p2-m.webp" alt="" decoding="async">
+      <video data-sc-src="assets/v2.mp4" data-sc-src-mobile="assets/v2-m.mp4" muted playsinline></video>
+    </div>
+    <div data-sc-segment data-sc-w="3" data-sc-waypoint="Açılış">
+      <img class="sc-world__poster" src="assets/p3.webp" data-m="assets/p3-m.webp" alt="" decoding="async">
+      <video data-sc-src="assets/v3.mp4" data-sc-src-mobile="assets/v3-m.mp4" muted playsinline></video>
+    </div>
+    <div data-sc-segment data-sc-w="1.5" data-sc-waypoint="Kalp">
+      <img class="sc-world__poster" src="assets/p4.webp" data-m="assets/p4-m.webp" alt="" decoding="async">
+      <video data-sc-src="assets/v4.mp4" data-sc-src-mobile="assets/v4-m.mp4" muted playsinline></video>
+    </div>
+    <div data-sc-segment data-sc-w="1.5" data-sc-waypoint="Bütün">
+      <img class="sc-world__poster" src="assets/p5.webp" data-m="assets/p5-m.webp" alt="" decoding="async">
+      <video data-sc-src="assets/v5.mp4" data-sc-src-mobile="assets/v5-m.mp4" muted playsinline></video>
+    </div>
+  </div>
+
+  <div data-sc-world-copy>
+    <div class="scrim sc-world__scrim" aria-hidden="true"></div>
+
+    <h1 data-sc-copy data-sc-window="hero" class="hero__name"><span>halvet</span><span class="vh"> mekanik saat atölyesi</span></h1>
+    <p data-sc-copy data-sc-window="hero" class="hero__line">Kuzguncuk'ta tek bir masada, elle kurulan mekanik saatler.</p>
+
+    <div data-sc-copy data-sc-window="0.105 0.205" class="blk blk--left">
+      <h2>Yılda on iki saat.</h2>
+      <p>Her biri baştan sona tek bir ustanın elinden geçer. Sipariş sırası açıldığında haber veririz.</p>
+    </div>
+
+    <div class="pad pad--br" data-pad="kadran" aria-hidden="true"></div>
+    <div data-sc-copy data-sc-window="0.215 0.33" class="blk blk--right" id="kadran">
+      <h2>Kadran elle kazınır.</h2>
+      <p>Siyah zemindeki dalgalar gravür tezgâhında tek tek işlenir. İki kadran hiçbir zaman aynı çıkmaz.</p>
+    </div>
+
+    <div class="pad pad--tl" data-pad="ici" aria-hidden="true"></div>
+    <div data-sc-copy data-sc-window="0.345 0.50" class="blk blk--top" id="ici">
+      <h2>Şimdi içine bakın.</h2>
+      <p>Her parça bu masada ayarlanır, sonra sessizce yerine döner.</p>
+    </div>
+
+    <div class="parts" aria-label="Halvet Kalp'in parçaları">
+      <svg aria-hidden="true" data-pad="part1"></svg>
+      <ul>
+        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" id="part1" data-at="0.640 0.167">Safir cam<small>Çizilmez, iki yüzü yansımasız</small></li>
+        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.617 0.268">İbreler<small>Altından, elle eğilmiş</small></li>
+        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.613 0.392">Kadran<small>Dalga gravürü</small></li>
+        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.594 0.542">Mekanizma<small>Elle kurmalı, kırk saat çalışır</small></li>
+        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.622 0.630">Kasa<small>18 ayar sarı altın, 38 mm</small></li>
+        <li data-sc-copy data-sc-window="0.605 0.705 0.3 0.3" data-at="0.592 0.785">Arka cam<small>Kalbi görünsün diye</small></li>
+      </ul>
+    </div>
+
+    <div class="pad pad--l" data-pad="kalp" aria-hidden="true"></div>
+    <div data-sc-copy data-sc-window="0.725 0.83" class="blk blk--left" id="kalp">
+      <h2>Kalbi saniyede altı kez atar.</h2>
+      <p>Balans çarkı ve mavi spirali. Her sabah kurmayı unutmayın, gerisini o halleder.</p>
+    </div>
+
+    <div class="pad pad--l pad--end" data-pad="ugrayin" aria-hidden="true"></div>
+    <div data-sc-copy data-sc-window="0.93 1 0.45 0" class="end__time" id="ugrayin">
+        <h2>Şimdi saat <time id="now">--.--</time>.</h2>
+        <p>Halvet de aynısını söylüyor. Köşedeki kadrana bakın.</p>
+    </div>
+      <a data-sc-copy data-sc-window="0.93 1 0.45 0" class="go" href="mailto:atolye@halvet.example?subject=Randevu">Uğrayın</a>
+      <p data-sc-copy data-sc-window="0.93 1 0.45 0" class="go__note">Kuzguncuk'taki atölye yalnızca randevuyla açık. Haftada iki misafir.</p>
+      <div data-sc-copy data-sc-window="0.93 1 0.45 0" class="foot"><span>Halvet Saat Atölyesi · İstanbul</span><span>Uydurma bir markadır.</span></div>
+  </div>
+
+  <div data-sc-spacer aria-hidden="true"></div>
+</main>
+
+<script>
+  // Phones get the portrait-cropped posters, the same crop as their clips.
+  // Under reduced motion no clip ever loads and the posters ARE the film, so
+  // each leg shows the frame that tells its part of the story (where it lands).
+  (function () {
+    var mobile = matchMedia('(max-width: 860px)').matches || matchMedia('(hover: none) and (pointer: coarse)').matches;
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('img[data-m]').forEach(function (img, i) {
+      var src = mobile ? img.getAttribute('data-m') : img.getAttribute('src');
+      if (still && i > 1) src = src.replace('.webp', '-rm.webp');
+      if (src !== img.getAttribute('src')) img.src = src;
+    });
+    // Without the film the exploded frame holds for the whole leg, so the names
+    // can arrive earlier and leave before the next still dissolves in.
+    if (still) document.querySelectorAll('.parts li').forEach(function (li) { li.setAttribute('data-sc-window', '0.47 0.645 0.25 0.3'); });
+  })();
+</script>
+<script src="scrollcraft.js"></script>
+<script>
+  window.__sc = ScrollCraft.mount(document);
+
+  function relayout() { dispatchEvent(new Event('resize')); }
+  addEventListener('load', relayout);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+
+  var root = document.documentElement;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var TOTAL = 9; // sum of leg weights, in viewport-heights
+
+  function trackY(f) { return f * TOTAL * innerHeight; }
+  function progress() {
+    var max = Math.max(trackY(1), 1);
+    return Math.min(Math.max((scrollY || 0) / max, 0), 1);
+  }
+
+  // Nav jumps along the track instead of to blocks: the page has no blocks.
+  document.querySelectorAll('[data-go]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      scrollTo({ top: trackY(parseFloat(a.getAttribute('data-go'))), behavior: reduce ? 'auto' : 'smooth' });
+    });
+  });
+
+  // ---- the dial: scrolling winds it, the finale lets it catch real time ----
+  var ticks = document.getElementById('ticks');
+  for (var i = 0; i < 12; i++) {
+    var a = i * Math.PI / 6, r1 = i % 3 ? 16.5 : 15, r2 = 18;
+    var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    l.setAttribute('class', 'dial__tick');
+    l.setAttribute('x1', 22 + Math.sin(a) * r1); l.setAttribute('y1', 22 - Math.cos(a) * r1);
+    l.setAttribute('x2', 22 + Math.sin(a) * r2); l.setAttribute('y2', 22 - Math.cos(a) * r2);
+    ticks.appendChild(l);
+  }
+  var hand = { h: document.querySelector('.dial__h'), m: document.querySelector('.dial__m') };
+  var nowEl = document.getElementById('now');
+  var fmt = new Intl.DateTimeFormat('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+  function istanbul() {
+    var p = {};
+    fmt.formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+    return { h: +p.hour % 24, m: +p.minute, s: +p.second };
+  }
+  var S0 = 0.9, S1 = 0.985; // the catch-up runs across the finale
+  function smooth(x) { x = Math.min(Math.max(x, 0), 1); return x * x * (3 - 2 * x); }
+  function mod(a, n) { return ((a % n) + n) % n; }
+  var shown = { h: 0, m: 0 }, lastText = '';
+
+  function tick() {
+    var p = progress(), t = istanbul();
+    var w = Math.min(p, S0) / S0;
+    var sm = w * 720, sh = w * 60;                    // two turns of the minute hand
+    var rm = t.m * 6 + t.s * 0.1, rh = (t.h % 12) * 30 + t.m * 0.5;
+    var f = reduce ? 1 : smooth((p - S0) / (S1 - S0));
+    var m = sm + f * mod(rm - 720, 360);
+    var h = sh + f * mod(rh - 60, 360);
+    if (!reduce) { shown.m += (m - shown.m) * 0.2; shown.h += (h - shown.h) * 0.2; }
+    else { shown.m = m; shown.h = h; }
+    hand.m.style.transform = 'rotate(' + shown.m.toFixed(2) + 'deg)';
+    hand.h.style.transform = 'rotate(' + shown.h.toFixed(2) + 'deg)';
+
+    var txt = String(t.h).padStart(2, '0') + '.' + String(t.m).padStart(2, '0');
+    if (txt !== lastText) { nowEl.textContent = txt; nowEl.setAttribute('datetime', txt.replace('.', ':')); lastText = txt; }
+
+    // The monument settles as the first screen leaves.
+    var k = Math.min((scrollY || 0) / innerHeight, 1);
+    nameSpan.style.transform = reduce ? 'none' : 'scale(' + (1 - 0.06 * k).toFixed(4) + ')';
+
+    pads.forEach(function (p) { p[0].style.opacity = p[1].style.opacity || 0; });
+
+    requestAnimationFrame(tick);
+  }
+  var pads = Array.prototype.map.call(document.querySelectorAll("[data-pad]"), function (p) { return [p, document.getElementById(p.getAttribute("data-pad"))]; });
+  var nameSpan = document.querySelector('.hero__name span');
+  requestAnimationFrame(tick);
+
+  // ---- the peak: name every part where it hangs ----------------------------
+  // Points are fractions of the 16:9 film frame; the stage covers the viewport,
+  // so map them through the same cover crop the browser applies.
+  var parts = document.querySelector('.parts');
+  var partSvg = parts.querySelector('svg');
+  var NS = 'http://www.w3.org/2000/svg';
+  function placeParts() {
+    var vw = innerWidth, vh = innerHeight, ar = 16 / 9;
+    var mobile = vw <= 860;
+    // phones play a 9:16 crop centred on the assembly
+    var fw, fh, ox, oy;
+    if (mobile) { fh = vh; fw = vh * ar; ox = (vw - fw) / 2; oy = 0; if (vw / vh > ar) { fw = vw; fh = vw / ar; ox = 0; oy = (vh - fh) / 2; } }
+    else if (vw / vh > ar) { fw = vw; fh = vw / ar; ox = 0; oy = (vh - fh) / 2; }
+    else { fh = vh; fw = vh * ar; ox = (vw - fw) / 2; oy = 0; }
+    while (partSvg.firstChild) partSvg.removeChild(partSvg.firstChild);
+    var items = parts.querySelectorAll('li');
+    // On a phone the assembly fills the width: the names become one caption line.
+    if (mobile) { items.forEach(function (li) { li.removeAttribute('style'); }); return; }
+    var lx = ox + 0.70 * fw;
+    items.forEach(function (li) {
+      var at = li.getAttribute('data-at').split(' ').map(parseFloat);
+      var px = ox + at[0] * fw, py = oy + at[1] * fh;
+      li.style.top = py + 'px';
+      li.style.left = (lx + 14) + 'px';
+      var endX = lx;
+      var ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', px); ln.setAttribute('y1', py); ln.setAttribute('x2', endX); ln.setAttribute('y2', py);
+      var dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', px); dot.setAttribute('cy', py); dot.setAttribute('r', 2.5);
+      partSvg.appendChild(ln); partSvg.appendChild(dot);
+    });
+  }
+  placeParts();
+  addEventListener('resize', placeParts);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeParts);
+</script>
+</body>
+</html>
