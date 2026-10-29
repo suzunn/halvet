@@ -317,11 +317,83 @@
     return Math.min(Math.max((scrollY || 0) / max, 0), 1);
   }
 
+  // ---- the governor: the wheel never outruns the decoder ---------------------
+  // A seek costs the decoder 10-15ms, so it shows ~75 new frames a second at
+  // best. A hard wheel flick asks for several hundred, and the film skips whole
+  // stretches (measured: 34% of updates jumped 3-8 frames at 2500px/s). So the
+  // wheel and keys feed a target here, and the page glides toward it no faster
+  // than each leg can paint: about two frames per update. Everything reads
+  // scrollY, so copy, seams and film stay in step. Touch and the scrollbar are
+  // left native.
+  var LEGS = [[1.4, 119], [1.5, 118], [3.2, 479], [2.2, 239], [2.8, 241]]; // weight vh, frames on the page
+  var BUDGET = 150; // frames per second the decoder can show cleanly
+  var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var gov = { on: fine && !reduce, pos: 0, target: 0, set: -1, run: false, boost: 1, last: 0, raf: 0 };
+  function maxY() { return Math.max(document.documentElement.scrollHeight - innerHeight, 0); }
+  function vmax(y) {
+    var vh = innerHeight, at = y / vh, c = 0;
+    for (var i = 0; i < LEGS.length; i++) {
+      c += LEGS[i][0];
+      if (at < c) return BUDGET * LEGS[i][0] / LEGS[i][1] * vh;
+    }
+    return 3 * vh; // past the film: only copy moves
+  }
+  function govStep(now) {
+    var dt = Math.min((now - gov.last) / 1000, 0.05); gov.last = now;
+    var d = gov.target - gov.pos;
+    if (Math.abs(d) < 0.5) { gov.pos = gov.target; gov.run = false; gov.boost = 1; }
+    else {
+      var cap = vmax(gov.pos) * gov.boost * dt;
+      var step = d * (1 - Math.pow(0.86, dt * 60));
+      gov.pos += Math.max(-cap, Math.min(cap, step));
+    }
+    gov.set = Math.round(gov.pos);
+    scrollTo({ top: gov.set, behavior: 'instant' });
+    if (gov.run) gov.raf = requestAnimationFrame(govStep);
+  }
+  function govTo(y, boost) {
+    if (!gov.run) { gov.pos = scrollY; gov.last = performance.now(); }
+    gov.target = Math.max(0, Math.min(maxY(), y));
+    gov.boost = boost || 1;
+    if (!gov.run) { gov.run = true; gov.raf = requestAnimationFrame(govStep); }
+  }
+  function govBy(dy) {
+    // never queue more than a screen of travel: when the wheel stops, so does the page
+    var vh = innerHeight;
+    var base = gov.run ? Math.max(gov.pos - vh, Math.min(gov.pos + vh, gov.target)) : scrollY;
+    govTo(base + dy);
+  }
+  if (gov.on) {
+    addEventListener('wheel', function (e) {
+      if (e.ctrlKey || e.defaultPrevented) return;
+      e.preventDefault();
+      var k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
+      govBy(e.deltaY * k);
+    }, { passive: false });
+    addEventListener('keydown', function (e) {
+      if (e.altKey || e.ctrlKey || e.metaKey || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+      var vh = innerHeight, d = { ArrowDown: 60, ArrowUp: -60, PageDown: vh * 0.9, PageUp: -vh * 0.9, ' ': e.shiftKey ? -vh * 0.9 : vh * 0.9 }[e.key];
+      if (e.key === 'Home') { e.preventDefault(); govTo(0, 2.5); }
+      else if (e.key === 'End') { e.preventDefault(); govTo(maxY(), 2.5); }
+      else if (d) { e.preventDefault(); govBy(d); }
+    });
+    // the scrollbar, find-in-page or a focus jump moved the page: follow it
+    addEventListener('scroll', function () {
+      if (gov.run && Math.abs(scrollY - gov.set) > 2) { gov.run = false; gov.boost = 1; cancelAnimationFrame(gov.raf); }
+    }, { passive: true });
+    // the scroll is smooth already, so the film can track it more tightly
+    addEventListener('load', function () {
+      if (window.__sc && __sc.clips) __sc.clips.forEach(function (V) { V.lerp = 0.3; });
+    });
+  }
+
   // Nav jumps along the track instead of to blocks: the page has no blocks.
   document.querySelectorAll('[data-go]').forEach(function (a) {
     a.addEventListener('click', function (e) {
       e.preventDefault();
-      scrollTo({ top: trackY(parseFloat(a.getAttribute('data-go'))), behavior: reduce ? 'auto' : 'smooth' });
+      var y = trackY(parseFloat(a.getAttribute('data-go')));
+      if (gov.on) govTo(y, 2.5);
+      else scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
     });
   });
 
